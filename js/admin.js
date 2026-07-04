@@ -592,17 +592,18 @@ function toggleMobileSidebar() {
 }
 
 function switchTab(tab) {
-  ['tab-orders','tab-products','tab-categories','tab-settings'].forEach(t => {
+  ['tab-orders','tab-products','tab-categories','tab-users','tab-settings'].forEach(t => {
     const el = document.getElementById(t);
     if (el) el.classList.toggle('hidden', t !== `tab-${tab}`);
   });
-  ['btn-orders','btn-products','btn-categories','btn-settings'].forEach(b => {
+  ['btn-orders','btn-products','btn-categories','btn-users','btn-settings'].forEach(b => {
     const el = document.getElementById(b);
     if (!el) return;
     const active = b === `btn-${tab}`;
     el.className = `w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3 ${active ? 'bg-green-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`;
   });
   if (tab === 'categories') renderCategories();
+  if (tab === 'users') renderUsersTable();
   if (window.innerWidth < 768) {
     const drawer = document.getElementById('sidebar-drawer');
     const backdrop = document.getElementById('mobile-sidebar-backdrop');
