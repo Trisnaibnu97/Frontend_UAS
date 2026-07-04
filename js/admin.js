@@ -6,10 +6,24 @@ const Admin = {
   isLoggedIn() {
     return localStorage.getItem('tektok_admin') === 'true';
   },
-  login(email, password) {
+  async login(email, password) {
     if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
       localStorage.setItem('tektok_admin', 'true');
       return true;
+    }
+    try {
+      const res = await fetch(`${Utils.API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data.role === 'Admin') {
+        localStorage.setItem('tektok_admin', 'true');
+        return true;
+      }
+    } catch (err) {
+      console.warn('⚡ API Backend offline untuk admin login, gunakan localStorage.');
     }
     const users = this.getUsers();
     const adminUser = users.find(u => u.email === email && u.password === password && u.role === 'Admin');
@@ -387,6 +401,19 @@ async function initAdmin() {
     console.warn('⚡ API Backend tidak terjangkau untuk orders admin.');
   }
 
+  // 3. Load users dari Railway API atau fallback
+  try {
+    const resUsers = await fetch(`${Utils.API_BASE_URL}/users`);
+    if (resUsers.ok) {
+      const resultUsers = await resUsers.json();
+      if (resultUsers.success && resultUsers.data) {
+        localStorage.setItem('tektok_users', JSON.stringify(resultUsers.data));
+      }
+    }
+  } catch (err) {
+    console.warn('⚡ API Backend tidak terjangkau untuk users admin.');
+  }
+
   const orders = Admin.getAllOrders();
   renderStats(orders, window._adminProducts);
   renderOrders();
@@ -492,7 +519,7 @@ function renderUsersTable(search = '') {
   }).join('');
 }
 
-function toggleUserRole(email) {
+async function toggleUserRole(email) {
   if (email === 'admin@bangibshop.com') {
     Utils.showToast('Administrator Utama tidak dapat diubah rolenya.', 'error');
     return;
@@ -506,10 +533,20 @@ function toggleUserRole(email) {
     Admin.saveUsers(users);
     renderUsersTable(document.getElementById('user-search')?.value || '');
     Utils.showToast(`Role untuk ${users[idx].name} diubah menjadi ${nextRole}!`, 'success');
+
+    try {
+      await fetch(`${Utils.API_BASE_URL}/users/${encodeURIComponent(email)}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: nextRole })
+      });
+    } catch (err) {
+      console.warn('⚡ Gagal sync role user ke Railway:', err);
+    }
   }
 }
 
-function deleteUser(email) {
+async function deleteUser(email) {
   if (email === 'admin@bangibshop.com') {
     Utils.showToast('Administrator Utama tidak dapat dihapus.', 'error');
     return;
@@ -519,6 +556,14 @@ function deleteUser(email) {
   Admin.saveUsers(users);
   renderUsersTable(document.getElementById('user-search')?.value || '');
   Utils.showToast('User berhasil dihapus', 'info');
+
+  try {
+    await fetch(`${Utils.API_BASE_URL}/users/${encodeURIComponent(email)}`, {
+      method: 'DELETE'
+    });
+  } catch (err) {
+    console.warn('⚡ Gagal hapus user di Railway:', err);
+  }
 }
 
 function openAddUserModal() {
@@ -533,7 +578,7 @@ function openAddUserModal() {
   document.getElementById('user-modal')?.classList.remove('hidden');
 }
 
-function saveUser() {
+async function saveUser() {
   const name = document.getElementById('u-name')?.value.trim();
   const email = document.getElementById('u-email')?.value.trim();
   const password = document.getElementById('u-password')?.value;
@@ -555,6 +600,16 @@ function saveUser() {
   document.getElementById('user-modal')?.classList.add('hidden');
   renderUsersTable(document.getElementById('user-search')?.value || '');
   Utils.showToast(`User ${name} berhasil ditambahkan sebagai ${role}!`, 'success');
+
+  try {
+    await fetch(`${Utils.API_BASE_URL}/users/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role, status: 'Aktif' })
+    });
+  } catch (err) {
+    console.warn('⚡ Gagal simpan user baru ke Railway:', err);
+  }
 }
 
 async function syncWithRailway() {

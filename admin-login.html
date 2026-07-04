@@ -49,9 +49,9 @@
     Utils.applyDark();
     if (Admin.isLoggedIn()) window.location.href = 'admin.html';
 
-    document.getElementById('admin-login-form').addEventListener('submit', e => {
+    document.getElementById('admin-login-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const ok = Admin.login(
+      const ok = await Admin.login(
         document.getElementById('email').value,
         document.getElementById('password').value
       );
