@@ -388,13 +388,27 @@ async function initAdmin() {
     const resOrders = await fetch(`${Utils.API_BASE_URL}/orders`);
     if (resOrders.ok) {
       const resultOrders = await resOrders.json();
-      if (resultOrders.success && resultOrders.data) {
+      if (resultOrders.success && Array.isArray(resultOrders.data)) {
         const apiOrders = resultOrders.data.map(o => ({
           ...o,
           id: o.order_id || o.id,
-          date: o.created_at ? new Date(o.created_at).toLocaleString('id-ID') : o.date
+          name: o.customer_name || o.name || o.user_name || 'Pelanggan',
+          phone: o.customer_phone || o.phone || '',
+          address: o.customer_address || o.address || '',
+          payment: o.payment_method || o.payment || '-',
+          date: o.created_at ? new Date(o.created_at).toLocaleString('id-ID') : (o.date || '')
         }));
-        localStorage.setItem('tektok_orders', JSON.stringify(apiOrders));
+        
+        // Gabungkan dengan pesanan lokal agar pesanan yang offline/lokal tidak hilang
+        const localOrders = JSON.parse(localStorage.getItem('tektok_orders') || '[]');
+        const mergedOrders = [...apiOrders];
+        localOrders.forEach(lo => {
+          if (!mergedOrders.some(ao => ao.id === lo.id || ao.order_id === lo.id)) {
+            mergedOrders.push(lo);
+          }
+        });
+
+        localStorage.setItem('tektok_orders', JSON.stringify(mergedOrders));
       }
     }
   } catch (err) {
