@@ -275,7 +275,7 @@ function showSuccess() {
 function sendDirectWA() {
   if (!window.currentPaidOrder) return;
   const o = window.currentPaidOrder;
-  const adminPhone = '6281234567890'; // Nomor WA Admin toko kamu (ganti nomor kamu di sini)
+  const adminPhone = localStorage.getItem('tektok_store_wa') || '6287713726230'; // Nomor WA Admin toko kamu
   const itemsText = (o.items || []).map((i, idx) => `${idx+1}. ${i.name} (x${i.qty}) - Rp ${Number(i.price*i.qty).toLocaleString('id-ID')}`).join('\n');
   const msg = `*HALO ADMIN, SAYA SUDAH PEMBAYARAN PESANAN!* 🛍️\n\n` +
     `*ID Pesanan:* ${o.id || o.transactionId}\n` +
