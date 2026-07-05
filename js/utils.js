@@ -2,7 +2,7 @@
 
 const Utils = {
   // Base URL Backend Railway
-  API_BASE_URL: 'https://trisnaibnumutsweb2-production.up.railway.app/api',
+  API_BASE_URL: window.location.hostname.includes('railway.app') ? `${window.location.origin}/api` : 'https://trisnaibnu-uas-web2-production.up.railway.app/api',
 
   formatRupiah(amount) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
