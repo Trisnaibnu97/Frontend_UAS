@@ -512,6 +512,9 @@ function renderUsersTable(search = '') {
           <button onclick="toggleUserRole('${u.email}')" title="Ubah Role" class="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium transition">
             🔄 Ubah Role
           </button>
+          <button onclick="resetUserPassword('${u.email}')" title="Reset Password" class="text-xs px-2.5 py-1 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 font-medium transition">
+            🔑 Reset Pass
+          </button>
           ${u.email === 'admin@bangibshop.com' ? '' : `<button onclick="deleteUser('${u.email}')" title="Hapus User" class="text-xs px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 font-medium transition">🗑️ Hapus</button>`}
         </div>
       </td>
@@ -563,6 +566,33 @@ async function deleteUser(email) {
     });
   } catch (err) {
     console.warn('⚡ Gagal hapus user di Railway:', err);
+  }
+}
+
+async function resetUserPassword(email) {
+  const newPass = prompt(`Masukkan password baru untuk user: ${email}\n(Minimal 6 karakter):`, 'bangib123');
+  if (!newPass) return;
+  if (newPass.length < 6) {
+    Utils.showToast('Password baru minimal 6 karakter!', 'error');
+    return;
+  }
+  const users = Admin.getUsers();
+  const idx = users.findIndex(u => u.email === email);
+  if (idx > -1) {
+    users[idx].password = newPass;
+    Admin.saveUsers(users);
+    Utils.showToast(`Password untuk ${email} diubah menjadi: ${newPass}`, 'success');
+
+    try {
+      await fetch(`${Utils.API_BASE_URL}/users/${encodeURIComponent(email)}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPass })
+      });
+      Utils.showToast('✅ Password berhasil disinkronkan ke server MySQL!', 'success');
+    } catch (err) {
+      console.warn('⚡ Gagal sync password user ke Railway:', err);
+    }
   }
 }
 

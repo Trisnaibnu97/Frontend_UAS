@@ -32,6 +32,9 @@
             <button type="button" onclick="togglePass()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">👁️</button>
           </div>
         </div>
+        <div class="flex justify-end text-xs">
+          <button type="button" onclick="openForgotModal()" class="text-green-600 dark:text-green-400 hover:underline font-medium">Lupa Password?</button>
+        </div>
         <button type="submit"
           class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition text-base">
           Masuk
@@ -52,6 +55,27 @@
     🌙
   </button>
 
+  <!-- Modal Lupa Password -->
+  <div id="forgot-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
+      <div class="text-4xl mb-3">🔑</div>
+      <h3 class="font-bold text-gray-800 dark:text-white text-lg mb-1">Lupa Password?</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Masukkan email akun kamu. Sistem akan menghubungkanmu ke WhatsApp Admin untuk permintaan reset password.</p>
+      <input id="forgot-email" type="email" placeholder="email@contoh.com"
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400 text-sm mb-4">
+      <div class="flex gap-2">
+        <button type="button" onclick="document.getElementById('forgot-modal').classList.add('hidden')"
+          class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-300 font-semibold py-2.5 rounded-xl transition text-sm">
+          Batal
+        </button>
+        <button type="button" onclick="requestPasswordReset()"
+          class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-md flex items-center justify-center gap-1.5">
+          <span>📲</span> Minta Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>
   <script>
@@ -60,6 +84,23 @@
     function togglePass() {
       const p = document.getElementById('password');
       p.type = p.type === 'password' ? 'text' : 'password';
+    }
+    function openForgotModal() {
+      document.getElementById('forgot-email').value = document.getElementById('email').value || '';
+      document.getElementById('forgot-modal').classList.remove('hidden');
+    }
+    function requestPasswordReset() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) {
+        Utils.showToast('Masukkan alamat email kamu.', 'error');
+        return;
+      }
+      const waNumber = localStorage.getItem('tektok_store_wa') || '6287713726230';
+      const text = `Halo Admin Bang IB Shop, saya lupa password untuk akun dengan email: *${email}*. Mohon bantuannya untuk mereset password akun saya agar bisa login kembali. Terima kasih!`;
+      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+      document.getElementById('forgot-modal').classList.add('hidden');
+      Utils.showToast('Mengalihkan ke WhatsApp Admin...', 'info');
     }
   </script>
 </body>
